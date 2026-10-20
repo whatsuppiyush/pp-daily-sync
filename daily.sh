@@ -25,6 +25,9 @@ dom=$(date +%d)
   $PY verify.py
   $PY names.py --apply                   # founder names from every source's records onto unnamed leads (DB only)
   $PY run.py retag
-  $PY push_lists.py
+  $PY enrich_companies.py                # DR + category for new companies, DR re-checked every 90 days
+  $PY sync_outreach.py                   # every campaign's lead state from Instantly into Neon's outreach ledger
+  $PY route_outreach.py --apply --products backlinkbot,backlinkbot_dfy,backlinkbot_launch   # new launches -> BacklinkBot, daily
+  [[ $dow == 7 ]] && $PY route_outreach.py --apply   # Sunday: top every campaign up to 2 weeks of new leads
   $PY report.py
 } >> "$LOG" 2>&1

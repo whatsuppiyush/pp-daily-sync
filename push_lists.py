@@ -47,7 +47,7 @@ def due(catch_all=False):
       from leads l join companies c on c.domain = l.company_domain
       where cardinality(c.lists) > 0 and cardinality(l.fit_products) > 0
         and l.reoon_checked_at > now() - interval '60 days'
-        and (l.reoon_safe or (l.reoon_status = 'catch_all' and (l.email_origin = 'listed' or %(catch_all)s)))
+        and l.reoon_safe and %(catch_all)s is not null   -- HARD RULE 2026-10-20: Reoon-safe only, catch-alls never
         and not exists (select 1 from suppression s where s.email = l.email)
         and coalesce(l.best_bucket, 'Not contacted') not in ('Hot', 'Replied', 'Neutral', 'Bounced', 'Unsubscribed')""",
         {'catch_all': catch_all}).fetchall()
@@ -95,7 +95,12 @@ def variables(r):
     # "Hi {{greeting}},": the founder's name whenever we have it, shared inboxes included (team@ is read by the founder at
     # this size); a shared inbox with no known founder gets "<Company> team", a personal one "there"
     greeting = first or ('there' if r['contact_type'] != 'company' else f'{company} team')
+    # one campaign serves founders and shared inboxes (2026-10-18): the shared inbox gets one extra sentence right
+    # after "Saw {{sourceLine}}." in email 1; it starts with a space so a founder's copy has no gap
+    inbox_line = (" I couldn't find the founder's email, so I'm writing here. Could you pass this to whoever runs growth?"
+                  if r['contact_type'] == 'company' else None)
     v = {'greeting': greeting, 'maker': first, 'source': r['_src'], 'sourceLine': SOURCE_LINE[r['_src']], 'audience': r['contact_type'],
+         'inboxLine': inbox_line,
          'launchMonth': datetime.date.fromisoformat(sg['ph_day']).strftime('%B') if sg.get('ph_day') else None,
          'upvotes': sg.get('upvotes'), 'tagline': sg.get('tagline'), 'mrr': sg.get('mrr'), 'ycBatch': sg.get('yc_batch'),
          'domainRating': r['domain_rating'], 'xHandle': r['x_handle'], 'title': r['title']}

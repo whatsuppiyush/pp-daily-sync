@@ -5,7 +5,8 @@ HERE = pathlib.Path(__file__).parent
 # secrets: .env locally, environment variables in CI (GitHub Actions)
 ENV = {k: v for k, v in os.environ.items() if k in ('DATABASE_URL', 'APIFY_TOKEN', 'REOON_API_KEY', 'PH_TOKEN',
                                                       'INSTANTLY_API_KEY', 'AZURE_CHAT_KEY', 'PH_RESOLVER_URL', 'PH_RESOLVER_SECRET', 'TELEGRAM_BOT_TOKEN',
-                                                      'TELEGRAM_CHAT_ID', 'GUMLOOP_API_KEY', 'GUMLOOP_USER_ID', 'GUMLOOP_AGENT_ID', 'APIFY_TOKENS', 'GITHUB_TOKEN', 'GITHUB_REPOSITORY', 'OUTSCRAPER_API_KEY')}
+                                                      'TELEGRAM_CHAT_ID', 'GUMLOOP_API_KEY', 'GUMLOOP_USER_ID', 'GUMLOOP_AGENT_ID', 'APIFY_TOKENS', 'GITHUB_TOKEN', 'GITHUB_REPOSITORY', 'OUTSCRAPER_API_KEY',
+                                                      'DATAFORSEO_AUTH_BASE64')}
 if (HERE / '.env').exists():
     ENV = {**{k: v.strip().strip('"') for k, v in (l.strip().split('=', 1) for l in open(HERE / '.env')
                                                    if '=' in l and not l.startswith('#'))}, **ENV}

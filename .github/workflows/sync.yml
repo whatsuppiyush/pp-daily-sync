@@ -5,7 +5,7 @@ on:
   workflow_dispatch:                
     inputs:
       task:
-        description: "daily | producthunt | launches | revenue | funded | chrome | shopify | marketingdb | retag | push | selftest | verify | report | backfill"
+        description: "daily | route | enrich | producthunt | launches | revenue | funded | chrome | shopify | marketingdb | retag | push | selftest | verify | report | backfill"
         required: true
         default: daily
       limit:
@@ -45,6 +45,8 @@ jobs:
       GUMLOOP_AGENT_ID: ${{ secrets.GUMLOOP_AGENT_ID }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OUTSCRAPER_API_KEY: ${{ secrets.OUTSCRAPER_API_KEY }}
+      DATAFORSEO_AUTH_BASE64: ${{ secrets.DATAFORSEO_AUTH_BASE64 }}
+      AZURE_CHAT_KEY: ${{ secrets.AZURE_CHAT_KEY }}
       PY: python
       PYTHONUNBUFFERED: "1"
     steps:
@@ -63,6 +65,8 @@ jobs:
           case "$T" in
             daily) bash daily.sh; cat cache/daily-*.log ;;
             push)  python push_lists.py $A ;;
+            route) python sync_outreach.py && python route_outreach.py $A ;;
+            enrich) python enrich_companies.py $A ;;
             retag) python run.py retag ;;
             selftest) python run.py selftest ;;
             verify) python verify.py $A ;;
