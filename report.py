@@ -126,8 +126,13 @@ def build(hours):
             a, b = r.get('run_started_at'), r.get('updated_at')
             if a and b:
                 mins += max(1, int((dt.datetime.fromisoformat(b.rstrip('Z')) - dt.datetime.fromisoformat(a.rstrip('Z'))).total_seconds() // 60) + 1)
-        out.append(f"GitHub Actions: ~{mins} of {GITHUB_FREE_MIN} free minutes used this month")
-        if mins >= 0.8 * GITHUB_FREE_MIN: warn.append(f'GitHub minutes at {mins / GITHUB_FREE_MIN:.0%}: add the upvote floor or make the repo public')
+        public = get_json(f"https://api.github.com/repos/{repo}", {'Authorization': f'Bearer {gh_tok}',
+                          'Accept': 'application/vnd.github+json'}).get('private') is False
+        if public:   # public repo: standard runners are free and unmetered, so there is no budget to warn about
+            out.append(f"GitHub Actions: ~{mins} minutes run this month (public repo, free and unlimited)")
+        else:
+            out.append(f"GitHub Actions: ~{mins} of {GITHUB_FREE_MIN} free minutes used this month")
+            if mins >= 0.8 * GITHUB_FREE_MIN: warn.append(f'GitHub minutes at {mins / GITHUB_FREE_MIN:.0%}: add the upvote floor or make the repo public')
 
     ready = DB.execute("""select count(*) n from leads l where l.reoon_safe and cardinality(l.fit_products) > 0
                           and not exists (select 1 from instantly_pushes p where p.email = l.email)
