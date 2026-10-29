@@ -27,7 +27,6 @@ dom=$(date +%d)
   $PY run.py retag
   $PY enrich_companies.py                # DR + category for new companies, DR re-checked every 90 days
   $PY sync_outreach.py                   # every campaign's lead state from Instantly into Neon's outreach ledger
-  $PY route_outreach.py --apply --products backlinkbot,backlinkbot_dfy,backlinkbot_launch   # new launches -> BacklinkBot, daily
-  [[ $dow == 7 ]] && $PY route_outreach.py --apply   # Sunday: top every campaign up to 2 weeks of new leads
+  $PY route_outreach.py --apply          # daily: new launches -> BacklinkBot, every other campaign topped up to ~2 weeks
   $PY report.py
 } >> "$LOG" 2>&1
