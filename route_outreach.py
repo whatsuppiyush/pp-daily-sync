@@ -20,8 +20,9 @@ Rules (agreed 2026-10-18):
   R8 HARD RULE (Piyush, 2026-10-20): nothing goes to Instantly unless Reoon marked it safe (leads.reoon_safe = true)
      within the last VERIFY_DAYS. Catch-all, unknown, never-checked and local-SMTP-only "valid" all wait.
      Every pushed lead carries custom variables reoonVerified / reoonStatus / reoonCheckedAt, so Instantly shows it too
-One campaign per product (2026-11-09). Agencies (us_agency_owners_2025) and Yelp businesses are no longer routed:
-HearBuyers Agencies was wound down and both Yelp campaigns are paused. Their rules stay in pick() for a restart.
+One campaign per product, split by offer and not by kind of lead (Piyush, 2026-11-09). Agency owners
+(us_agency_owners_2025) join the same XAutoDM / HearBuyers split as startups. Yelp businesses are not routed:
+both Yelp campaigns are paused. Their rules stay in pick() for a restart.
 """
 import argparse, collections, datetime as dt, hashlib, json, urllib.error, urllib.request
 from core import DB, ENV
@@ -136,8 +137,12 @@ def fits(r):
 
 def pick(r, done, today):
     """(product, reason) or (None, why not)."""
-    # Piyush 2026-11-09: one campaign per product; HearBuyers Agencies wound down, Yelp campaigns paused
-    if r['seg'] in ('agency', 'yelp'): return None, f"{r['seg']} outreach stopped 2026-11-09"
+    # Piyush 2026-11-09: one campaign per product, whoever the lead is; Yelp campaigns paused
+    if r['seg'] == 'yelp': return None, 'Yelp outreach paused 2026-11-09'
+    if r['seg'] == 'agency':
+        first = [p for p in ('xautodm', 'hearbuyers') if p not in done]
+        if not first: return None, 'ladder finished'
+        return first[int(hashlib.md5(r['email'].encode()).hexdigest(), 16) % len(first)], 'agency owner'
     if r['seg'] == 'yelp':
         if 'yelp' in done: return None, 'ladder finished'
         if r['query'] not in TRADE: return None, 'Yelp category without a trade word'
@@ -174,6 +179,8 @@ def variables(r):
                     if l in (r['lists'] or [])), None)
         v['sourceLine'] = SOURCE_LINE[src] if src else BUCKET_LINE.get(r['bucket'], 'your launch').format(c=company)
         v['domainRating'] = r['dr']
+    if r['seg'] == 'agency':
+        v['sourceLine'] = f'{company}'
     if r['seg'] == 'yelp':
         v.pop('inboxLine')
         rating = float(r['rating'] or 0)
