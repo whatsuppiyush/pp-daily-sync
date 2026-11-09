@@ -20,8 +20,8 @@ Rules (agreed 2026-10-18):
   R8 HARD RULE (Piyush, 2026-10-20): nothing goes to Instantly unless Reoon marked it safe (leads.reoon_safe = true)
      within the last VERIFY_DAYS. Catch-all, unknown, never-checked and local-SMTP-only "valid" all wait.
      Every pushed lead carries custom variables reoonVerified / reoonStatus / reoonCheckedAt, so Instantly shows it too
-Agencies (us_agency_owners_2025) get HearBuyers Agencies; Yelp businesses get Yelp AI ads (already advertising on
-Yelp) or Yelp local listings (everyone else with a rating). Same R3-R8 gates for both.
+One campaign per product (2026-11-09). Agencies (us_agency_owners_2025) and Yelp businesses are no longer routed:
+HearBuyers Agencies was wound down and both Yelp campaigns are paused. Their rules stay in pick() for a restart.
 """
 import argparse, collections, datetime as dt, hashlib, json, urllib.error, urllib.request
 from core import DB, ENV
@@ -37,14 +37,11 @@ CAMPAIGN = {
     'backlinkbot_launch': 'BacklinkBot Launch - Claim listing',
     'backlinkbot_dfy':    ('BacklinkBot - Launch + tool - Founder', 'BacklinkBot - Launch + tool - Team inbox'),
     'backlinkbot':        ('BacklinkBot - Agent - Founder', 'BacklinkBot - Agent - Team inbox'),
-    'xautodm':            ('XAutoDM - Startups - Founder', 'XAutoDM - Startups - Team inbox'),
+    'xautodm':            'XAutoDM',     # one campaign since 2026-11-09; shared inboxes get {{inboxLine}}
     'chatterapi':         'ChatterAPI - Builders + founders',
     'hearbuyers':         'HearBuyers - Founders (one campaign)',
     'subredditmarketing': 'Subreddit Marketing - B2B SaaS',
     'hookads':            'HookAds',
-    'hearbuyers_agencies': 'HearBuyers - Agencies',
-    'yelp_ads':           'Yelp - AI ads',
-    'yelp_local':         'Yelp - Local listings + SEO',
 }
 PRIORITY_DR, PRIORITY_AGE_DAYS = 20, 90       # Piyush 2026-10-20: older startups with DR > 20 go first, every campaign
 FRESH_PRODUCTS = {'backlinkbot', 'backlinkbot_dfy', 'backlinkbot_launch'}   # time-sensitive: launch pitch
@@ -139,8 +136,8 @@ def fits(r):
 
 def pick(r, done, today):
     """(product, reason) or (None, why not)."""
-    if r['seg'] == 'agency':
-        return ('hearbuyers_agencies', 'agency owner') if 'hearbuyers' not in done else (None, 'ladder finished')
+    # Piyush 2026-11-09: one campaign per product; HearBuyers Agencies wound down, Yelp campaigns paused
+    if r['seg'] in ('agency', 'yelp'): return None, f"{r['seg']} outreach stopped 2026-11-09"
     if r['seg'] == 'yelp':
         if 'yelp' in done: return None, 'ladder finished'
         if r['query'] not in TRADE: return None, 'Yelp category without a trade word'
